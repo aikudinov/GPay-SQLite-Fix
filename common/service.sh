@@ -13,6 +13,9 @@ then
 elif [ -f /system/bin/sqlite3 ]
 then
   sqlpath=/system/bin
+elif [ -f /system/xbin/sqlite3 ]
+then
+  sqlpath=/system/xbin
 fi
 
 # Check where chattr is

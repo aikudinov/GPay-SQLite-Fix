@@ -10,9 +10,9 @@ MODDIR=${0%/*}
 if [ -f /data/data/com.termux/files/usr/lib/sqlite3 ]
 then
   sqlpath=/data/data/com.termux/files/usr/lib
-elif [ -f /system/xbin/sqlite3 ]
+elif [ -f /system/bin/sqlite3 ]
 then
-  sqlpath=/system/xbin
+  sqlpath=/system/bin
 fi
 
 # Check where chattr is
@@ -20,7 +20,7 @@ if [ -f /data/data/com.termux/files/usr/bin/applets/chattr ]
 then
 chattrpath=/data/data/com.termux/files/usr/bin/applets
 else
-chattrpath=/system/xbin
+chattrpath=/system/bin
 fi
 
 # On to the main show the SQL commands and database permissions

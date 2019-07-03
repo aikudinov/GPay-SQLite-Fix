@@ -28,7 +28,7 @@ SKIPMOUNT=true
 PROPFILE=false
 
 # Set to true if you need post-fs-data script
-POSTFSDATA=true
+POSTFSDATA=false
 
 # Set to true if you need late_start service script
 LATESTARTSERVICE=false
@@ -124,25 +124,70 @@ REPLACE="
 print_modname() {
 	ui_print "***************************************"
 	ui_print "Magisk Google Pay SQL Fix" 
-	ui_print "(No Sleep Edition)"
+	ui_print "(Full Edition)"
 	ui_print "***************************************"
+	ui_print " "
 }
 
 
 on_install() {
-	# Install service script to service.d
-	ui_print "Copying service.sh to service.d/gpay.sh...."
-	cp -f $TMPDIR/service.sh $NVBASE/service.d/gpay.sh
-	ui_print "Setting permissions on  service.d/gpay.sh...."
+		
+	# check for required files
+	ui_print "Checking for required files...."
+
+	#check where chattr is
+	ui_print "Checking for chattr binary...."
+	if [ -f /data/data/com.termux/files/usr/bin/applets/chattr ] ; then
+		chattrpath=/data/data/com.termux/files/usr/bin/applets
+		ui_print "Chattr binary found in: $chattrpath"
+	elif [ -f /system/bin/chattr ] ; then 
+		chattrpath=/system/bin
+		ui_print "Chattr binary found in: $chattrpath"
+	elif [ -f /system/xbin/chattr ] ; then 
+		chattrpath=/system/xbin
+		ui_print "Chattr binary found in: $chattrpath"
+	else 
+		ui_print "Chattr binary not found, please install BusyBox from Magisk Repo, without this the fix may not work"
+	fi
+	sleep 2	
+	
+	# check where sqlite3 is
+	ui_print "Checking for sqlite3 binary...."
+	if [ -f /data/data/com.termux/files/usr/lib/sqlite3 ] ; then
+		sqlpath=/data/data/com.termux/files/usr/lib
+		ui_print "SQLite3 binary found in: $sqlpath"
+	elif [ -f /system/bin/sqlite3 ] ; 	then
+		sqlpath=/system/bin
+		ui_print "SQLite3 binary found in: $sqlpath"
+	elif [ -f /system/xbin/sqlite3 ] ; then
+		sqlpath=/system/xbin
+		ui_print "SQLite3 binary found in: $sqlpath"
+	else 
+		ui_print "SQLite3 binary not found, please install an SQLite3 binary, without this the fix may not work"
+	fi 	
+	ui_print " "
+	sleep 2
+	
+	# installing files
+	ui_print "Installing Pay Fix....."
+	# install service script to service.d
+	ui_print "Copying common/gpay.sh to service.d/gpay.sh...."
+	cp -f $TMPDIR/gpay.sh $NVBASE/service.d/gpay.sh
+	ui_print "Setting permissions on service.d/gpay.sh...."
 	chmod 0755 $NVBASE/service.d/gpay.sh
+	ui_print " "
 	sleep 2
 
-	# hide packags known to affect GPay using magiskhide
-	ui_print "Attempting to hide packags known to affect GPay using magiskhide..."
-	#for x in com.google.android.gms com.google.process.gapps com.google.process.gservices com.google.android.apps.walletnfcrel
+	# hide packages known to affect GPay using magiskhide
+	ui_print "Attempting to hide packages known to affect GPay using magiskhide..."
 	for x in com.google.android.gms com.google.android.gsf com.google.android.apps.walletnfcrel
 	do
-	magiskhide add $x && ui_print "Hidden successfully: $x" 
+		magiskhide add $x 
+		if [ $? -eq 0 ] ;	then
+			ui_print "$x: hidden successfully"
+		else
+			ui_print "$x: already hidden/not hidden successfully"	
+		fi
 	done 
 	ui_print " "
 	sleep 2	
@@ -151,7 +196,12 @@ on_install() {
 	ui_print "Clearing caches for targetted apps..."
 	for x in com.google.android.apps.walletnfcrel
 	do
-	pm clear $x && ui_print "Cleared successfully:  $x" 
+		pm clear $x >&2
+		if [ $? -eq 0 ] ;	then
+			ui_print "$x: cleared successfully" 
+		else
+			ui_print "$x: not cleared successfully" 	
+		fi	
 	done 
 	ui_print " "
 	sleep 2  	
@@ -164,12 +214,14 @@ on_install() {
 set_permissions() {
 	# The following is the default rule, DO NOT remove
 	set_perm_recursive $MODPATH 0 0 0755 0644
-	set_perm_recursive $MODPATH/uninstall.sh 0 0 0755 0777
+	
 	# Here are some examples:
 	# set_perm_recursive  $MODPATH/system/lib       0     0       0755      0644
 	# set_perm  $MODPATH/system/bin/app_process32   0     2000    0755      u:object_r:zygote_exec:s0
 	# set_perm  $MODPATH/system/bin/dex2oat         0     2000    0755      u:object_r:dex2oat_exec:s0
 	# set_perm  $MODPATH/system/lib/libart.so       0     0       0644
+	
+	set_perm $MODPATH/uninstall.sh 0 0 0755 0777
 }
 
 # You can add more functions to assist your custom script code

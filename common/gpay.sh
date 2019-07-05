@@ -11,7 +11,7 @@ logfile="/cache/payfixfirstrun.log"
 
 # set runsql variable :
 # 0 = dont run sql commands (440 only edition)
-# 1 = run sql commands (fill edition)
+# 1 = run sql commands (full edition)
 runsql=1
 
 # checking for existing payfixfirstrun.log file

@@ -6,8 +6,13 @@
 # if Magisk change its mount point in the future
 MODDIR=${0%/*}
 
-# set logfile
+# set logfile variable
 logfile="/cache/payfixfirstrun.log"
+
+# set runsql variable :
+# 0 = dont run sql commands (440 only edition)
+# 1 = run sql commands (fill edition)
+runsql=1
 
 # checking for existing payfixfirstrun.log file
 if [ ! -f $logfile ] ; then
@@ -25,7 +30,11 @@ if [ ! -f $logfile ] ; then
 		sqlpath=/system/xbin
 		echo "SQLite3 binary found in: $sqlpath" >> $logfile
 	else 
-		echo "SQLite3 binary not found, please install a SQLite3 binary, without this the fix may not work" >> $logfile
+		echo "SQLite3 binary not found, please install a SQLite3 binary, without this the fix *may* not work" >> $logfile
+		echo "I provide an SQLite3 binary for arm-v7 devices, and links to SQLite3 bonaries for other architectures " >> $logfile
+		echo "at https://forum.xda-developers.com/showpost.php?p=79643248&postcount=176" >> $logfile
+		# set runsql to 0 to skip running chmos 777 and SQLite3 comamnds (with no SQLite binary)
+		runsql=0
 	fi
 	sleep 2
 
@@ -40,14 +49,16 @@ if [ ! -f $logfile ] ; then
 		chattrpath=/system/xbin
 		echo "Chattr binary found in: $chattrpath" >> $logfile
 	else 
-		echo "Chattr binary not found, please install BusyBox, without this the fix may not work" >> $logfile
+		echo "Chattr binary not found, BusyBox is needed to provide chattr, which is used to make the database immutable" >> $logfile
+		echo "Without chattr this fix *may* not work, though people report that the fix works fine for them without using"  >> $logfile
+		echo "chattr. However, if you want the full fix script to run as designed, please install BusyBox for Android NDK from" >> $logfile 
+		echo  "the Magisk Repo" >> $logfile
 	fi
 	sleep 2
 
-	# on to the main show the SQL commands and database permissions
-	/system/bin/am force-stop /data/data/com.google.android.apps.walletnfcrel
-	if [ $? -eq 0 ]
-	then
+	# stop Google Pay
+	am force-stop /data/data/com.google.android.apps.walletnfcrel
+	if [ $? -eq 0 ] ; then
 		echo "Google Pay stopped successfully" >> $logfile
 	else
 		echo "Google Pay NOT stopped successfully" >> $logfile
@@ -56,51 +67,61 @@ if [ ! -f $logfile ] ; then
 
 	# undo dg.db immutability
 	$chattrpath/chattr -i /data/data/com.google.android.gms/databases/dg.db
-	if [ $? -eq 0 ]
-	then
+	if [ $? -eq 0 ] ; then
 		echo "Chattr -i command completed successfully" >> $logfile
 	else
 		echo "Chattr command FAILED" >> $logfile
 	fi
 	sleep 2
 
+	if [ $runsql -eq 1 ] ; then
 	# set 777 permissions on dg.db
-	/system/bin/chmod 777 /data/data/com.google.android.gms/databases/dg.db
-	if [ $? -eq 0 ]
-	then
+	chmod 777 /data/data/com.google.android.gms/databases/dg.db
+	perms=$(stat -c %a /data/data/com.google.android.gms/databases/dg.db)
+	if [ $perms -eq 777 ]; then
+		echo "Chmod 777 command completed successfully" >> $logfile
+		echo "Permissions reported as: $perms" >> $logfile
+	else
+		echo "Chmod command FAILED" >> $logfile
+		echo "Permissions reported as: $perms" >> $logfile
+	fi
+	
+	
+	if [ $? -eq 0 ] ; then
 		echo "Chmod 777 command completed successfully" >> $logfile
 	else
 		echo "Chmod command FAILED" >> $logfile
 	fi
 	sleep 2
-
+		
 	# run sqlite 3 commands on dg.db
 	$sqlpath/sqlite3 /data/data/com.google.android.gms/databases/dg.db "update main set c='0' where a like '%attest%';"
-	if [ $? -eq 0 ]
-	then
+	if [ $? -eq 0 ] ; 	then
 		echo "SQLite3 command completed successfully" >> $logfile
 	else
 		echo "SQLite3 command FAILED" >> $logfile
 	fi
+	fi
 	sleep 2
-	
+		
 	# set 440 permissions on dg.db
-	/system/bin/chmod 440 /data/data/com.google.android.gms/databases/dg.db
-	if [ $? -eq 0 ]
-	then
+	chmod 440 /data/data/com.google.android.gms/databases/dg.db
+	perms=$(stat -c %a /data/data/com.google.android.gms/databases/dg.db)
+	if [ $perms -eq 440 ] ; then
 		echo "Chmod 440 command completed successfully" >> $logfile
+		echo "Permissions reported as: $perms" >> $logfile
 	else
 		echo "Chmod command FAILED" >> $logfile
+		echo "Permissions reported as: $perms" >> $logfile
 	fi
 	sleep 2
 	
 	# make dg.db file immutable
 	$chattrpath/chattr +i /data/data/com.google.android.gms/databases/dg.db
-	if [ $? -eq 0 ]
-	then
+	if [ $? -eq 0 ] ; 	then
 		echo "Chattr +i command completed successfully" >> $logfile
 	else
-		echo "Chattr command FAILED" >> $logfile
+		echo "Chattr command FAILED. You would already been warned about this...." >> $logfile
 	fi
 	
 fi

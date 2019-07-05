@@ -122,10 +122,19 @@ REPLACE="
 # Set what you want to display when installing your module
 
 print_modname() {
-	ui_print "***************************************"
+	ui_print "*****************************************"
 	ui_print "Magisk Google Pay SQL Fix" 
 	ui_print "(Full Edition)"
-	ui_print "***************************************"
+	ui_print " "
+	ui_print "The fix features the work of:"
+	ui_print " "
+	ui_print "BostonDan - for the OP and original fix"
+	ui_print " "	
+	ui_print "braveheartleo - for the chattr suggestion"
+	ui_print " "
+	ui_print "Didgeridoohan - for the working method to hide" 
+	ui_print "Google Services Framework via magiskhide in a script loop"
+	ui_print "*****************************************"
 	ui_print " "
 }
 
@@ -148,6 +157,7 @@ on_install() {
 		ui_print "Chattr binary found in: $chattrpath"
 	else 
 		ui_print "Chattr binary not found, please install BusyBox from Magisk Repo, without this the fix may not work"
+		ui_print "Please read the original post (see support link) or /cache/playfixfirstrun.log after reboot for further info"
 	fi
 	sleep 2	
 	
@@ -164,12 +174,14 @@ on_install() {
 		ui_print "SQLite3 binary found in: $sqlpath"
 	else 
 		ui_print "SQLite3 binary not found, please install an SQLite3 binary, without this the fix may not work"
+		ui_print "Please read the original post (see support link) or /cache/playfixfirstrun.log after reboot for further info"
 	fi 	
 	ui_print " "
 	sleep 2
 	
 	# installing files
 	ui_print "Installing Pay Fix....."
+	ui_print " "
 	# install service script to service.d
 	ui_print "Copying common/gpay.sh to service.d/gpay.sh...."
 	cp -f $TMPDIR/gpay.sh $NVBASE/service.d/gpay.sh
@@ -177,18 +189,20 @@ on_install() {
 	chmod 0755 $NVBASE/service.d/gpay.sh
 	ui_print " "
 	sleep 2
-
+	
 	# hide packages known to affect GPay using magiskhide
 	ui_print "Attempting to hide packages known to affect GPay using magiskhide..."
-	for x in com.google.android.gms com.google.android.gsf com.google.android.apps.walletnfcrel
-	do
-		magiskhide add $x 
+	# the following few lines are contributed by digderidoohan - thanks for the delimiter and cutting routine for hiding Google Services Framework
+	# i tried many ways of delimiting etc and none worked, his did, champion!
+	packages='com.google.android.gsf_com.google.process.gapps com.google.android.gsf_com.google.process.gservices com.google.android.gms com.google.android.apps.walletnfcrel'
+	for i in $packages
+		do magiskhide add $(echo $i | cut -f 1 -d '_') $(echo $i | cut -f 2 -d '_')
 		if [ $? -eq 0 ] ;	then
-			ui_print "$x: hidden successfully"
+			ui_print "$i: hidden successfully"
 		else
-			ui_print "$x: already hidden/not hidden successfully"	
+			ui_print "$i: already hidden/not hidden successfully (most likely already hidden)"	
 		fi
-	done 
+	done
 	ui_print " "
 	sleep 2	
 
@@ -204,7 +218,12 @@ on_install() {
 		fi	
 	done 
 	ui_print " "
+	ui_print "Gpay Fix Install Complete"
+	ui_print " "
+	ui_print "You can now add your card to Google Pay and then reboot"
+	ui_print " "
 	sleep 2  	
+
 }
 
 # Only some special files require specific permissions

@@ -133,7 +133,7 @@ print_modname() {
 	ui_print "braveheartleo - for the chattr suggestion"
 	ui_print " "
 	ui_print "Didgeridoohan - for the working method to hide" 
-	ui_print "Google Services Framework via magiskhide in a script loop"
+	ui_print "Google Play Services via magiskhide in a script loop"
 	ui_print "*****************************************"
 	ui_print " "
 }
@@ -144,23 +144,6 @@ on_install() {
 	# check for required files
 	ui_print "Checking for required files...."
 
-	#check where chattr is
-	ui_print "Checking for chattr binary...."
-	if [ -f /data/data/com.termux/files/usr/bin/applets/chattr ] ; then
-		chattrpath=/data/data/com.termux/files/usr/bin/applets
-		ui_print "Chattr binary found in: $chattrpath"
-	elif [ -f /system/bin/chattr ] ; then 
-		chattrpath=/system/bin
-		ui_print "Chattr binary found in: $chattrpath"
-	elif [ -f /system/xbin/chattr ] ; then 
-		chattrpath=/system/xbin
-		ui_print "Chattr binary found in: $chattrpath"
-	else 
-		ui_print "Chattr binary not found, please install BusyBox from Magisk Repo, without this the fix may not work"
-		ui_print "Please read the original post (see support link) or /cache/playfixfirstrun.log after reboot for further info"
-	fi
-	sleep 2	
-	
 	# check where sqlite3 is
 	ui_print "Checking for sqlite3 binary...."
 	if [ -f /data/data/com.termux/files/usr/lib/sqlite3 ] ; then

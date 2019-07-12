@@ -1,3 +1,4 @@
+(
 #!/system/bin/sh
 # Do NOT assume where your module will be located.
 # ALWAYS use $MODDIR if you need to know where this script
@@ -74,14 +75,4 @@ else
 	echo "Gpay.sh script removal FAILED" >> $logfile
 	echo "" >> $logfile
 fi
-sleep 2
-
-# remove /cache/payfixfirstrun.log - this is the onetime runlog from first run of /data/adb/service/gpay.sh
-rm -rf /cache/payfixfirstrun.log
-if [ $? -eq 0 ] ; then
-	echo "Payfix firstrun log removed successfully" >> $logfile
-	echo "" >> $logfile
-else
-	echo "Payfix firstrun log removal FAILED" >> $logfile
-	echo "" >> $logfile
-fi
+) &

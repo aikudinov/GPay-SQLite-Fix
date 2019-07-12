@@ -1,3 +1,4 @@
+(
 #!/system/bin/sh
 # Do NOT assume where your module will be located.
 # ALWAYS use $MODDIR if you need to know where this script
@@ -116,7 +117,4 @@ else
 	echo "" >> $logfile
 fi
 sleep 2
-	
-
-	
-
+) &
